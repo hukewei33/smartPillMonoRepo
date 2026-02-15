@@ -256,6 +256,50 @@ Log a medication consumption for the given medication. The medication must belon
 
 ---
 
+### GET /consumption-report
+
+Returns a 7-day weekly report of expected and actual medication consumption for the authenticated user. Query param `start_date` (YYYY-MM-DD) is required.
+
+**Headers:** `Authorization: Bearer <token>` (required).
+
+**Query:**
+
+| Param        | Required | Notes                              |
+| ------------ | -------- | ---------------------------------- |
+| `start_date` | yes      | First day of the 7-day window (YYYY-MM-DD). |
+
+**Responses:**
+
+- **200 OK** — Array of 7 day results (calendar days from `start_date` through `start_date + 6`).
+
+  Each element:
+
+  - `date` — YYYY-MM-DD.
+  - `expected` — Array of expected consumption slots derived from the user’s medications (start_date, day_interval, daily_frequency). Each slot: `{ medication_id, medication_name, dose_index }`.
+  - `actual` — Array of logged consumptions for that date. Each: `{ id, medication_id, medication_name, date, time }`.
+
+  Example (first day only):
+
+  ```json
+  [
+    {
+      "date": "2025-02-15",
+      "expected": [
+        { "medication_id": 1, "medication_name": "Aspirin", "dose_index": 1 },
+        { "medication_id": 1, "medication_name": "Aspirin", "dose_index": 2 }
+      ],
+      "actual": [
+        { "id": 1, "medication_id": 1, "medication_name": "Aspirin", "date": "2025-02-15", "time": "08:00" }
+      ]
+    }
+  ]
+  ```
+
+- **400 Bad Request** — Missing or invalid `start_date`. Body: `{ "error": "<message>" }`.
+- **401 Unauthorized** — Missing or invalid token.
+
+---
+
 ## Summary
 
 | Method | Path               | Auth   | Purpose                    |
@@ -270,3 +314,4 @@ Log a medication consumption for the given medication. The medication must belon
 | PUT    | /medications/:id   | Bearer | Update medication          |
 | DELETE | /medications/:id   | Bearer | Delete medication          |
 | POST   | /medications/:id/consumptions | Bearer | Log medication consumption |
+| GET    | /consumption-report           | Bearer | Weekly consumption report (query: start_date) |
