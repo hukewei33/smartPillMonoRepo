@@ -118,11 +118,121 @@ Authenticated “hello world” endpoint. Response message includes the authenti
 
 ---
 
+## Medications
+
+All medication routes are under `/medications`. They require a valid JWT. **Medications are scoped to the authenticated user:** users can only create, view, update, and delete their own medications. Accessing another user’s medication by ID returns **404 Not Found**.
+
+### GET /medications
+
+List all medications for the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>` (required).
+
+**Responses:**
+
+- **200 OK**
+
+  ```json
+  {
+    "medications": [
+      {
+        "id": 1,
+        "name": "Aspirin",
+        "dose": "100mg",
+        "start_date": "2025-01-01",
+        "daily_frequency": 2,
+        "day_interval": 1,
+        "created_at": "2025-01-01T12:00:00.000Z"
+      }
+    ]
+  }
+  ```
+
+- **401 Unauthorized** — Missing or invalid token.
+
+---
+
+### POST /medications
+
+Create a new medication for the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>` (required).
+
+**Request body:**
+
+| Field             | Type   | Required | Notes                        |
+| ----------------- | ------ | -------- | ---------------------------- |
+| `name`            | string | yes      | Medication name.             |
+| `dose`            | string | yes      | e.g. `"100mg"`, `"2000 IU"`. |
+| `start_date`      | string | yes      | ISO date (e.g. `YYYY-MM-DD`). |
+| `daily_frequency` | number | yes      | Positive integer (times/day). |
+| `day_interval`   | number | yes      | Positive integer (e.g. 1 = daily, 2 = every 2 days). |
+
+**Responses:**
+
+- **201 Created** — Medication created. Body is the created medication object (same shape as list items, including `id` and `created_at`).
+- **400 Bad Request** — Validation failed. Body: `{ "error": "<message>" }`.
+- **401 Unauthorized** — Missing or invalid token.
+
+---
+
+### GET /medications/:id
+
+Get a single medication by ID. Returns 404 if the medication does not exist or does not belong to the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>` (required).
+
+**Responses:**
+
+- **200 OK** — Medication object (same shape as list items).
+- **400 Bad Request** — Invalid `id`. Body: `{ "error": "Invalid medication id" }`.
+- **401 Unauthorized** — Missing or invalid token.
+- **404 Not Found** — Medication not found or not owned by user. Body: `{ "error": "Medication not found" }`.
+
+---
+
+### PUT /medications/:id
+
+Update a medication. Returns 404 if the medication does not exist or does not belong to the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>` (required).
+
+**Request body:** Same as POST /medications (all fields required).
+
+**Responses:**
+
+- **200 OK** — Updated medication object.
+- **400 Bad Request** — Validation failed or invalid `id`.
+- **401 Unauthorized** — Missing or invalid token.
+- **404 Not Found** — Medication not found or not owned by user.
+
+---
+
+### DELETE /medications/:id
+
+Delete a medication. Returns 404 if the medication does not exist or does not belong to the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>` (required).
+
+**Responses:**
+
+- **204 No Content** — Medication deleted.
+- **400 Bad Request** — Invalid `id`.
+- **401 Unauthorized** — Missing or invalid token.
+- **404 Not Found** — Medication not found or not owned by user.
+
+---
+
 ## Summary
 
-| Method | Path             | Auth   | Purpose                |
-| ------ | ---------------- | ------ | ---------------------- |
-| GET    | /health          | no     | Health check           |
-| POST   | /auth/register   | no     | Create account         |
-| POST   | /auth/login      | no     | Login, get JWT         |
-| GET    | /hello           | Bearer | Authenticated example  |
+| Method | Path               | Auth   | Purpose                    |
+| ------ | ------------------ | ------ | -------------------------- |
+| GET    | /health            | no     | Health check               |
+| POST   | /auth/register     | no     | Create account             |
+| POST   | /auth/login        | no     | Login, get JWT             |
+| GET    | /hello             | Bearer | Authenticated example      |
+| GET    | /medications       | Bearer | List user’s medications   |
+| POST   | /medications       | Bearer | Create medication          |
+| GET    | /medications/:id   | Bearer | Get one medication        |
+| PUT    | /medications/:id   | Bearer | Update medication          |
+| DELETE | /medications/:id   | Bearer | Delete medication          |

@@ -9,10 +9,26 @@ export type RegisterResponse = { id: number; email: string };
 export type HelloResponse = { message: string };
 export type ErrorResponse = { error: string };
 
+export type Medication = {
+  id: number;
+  name: string;
+  dose: string;
+  start_date: string;
+  daily_frequency: number;
+  day_interval: number;
+  created_at: string;
+};
+
+export type MedicationsListResponse = { medications: Medication[] };
+
 async function parseJson<T>(res: Response): Promise<T> {
   const text = await res.text();
   if (!text) return {} as T;
   return JSON.parse(text) as T;
+}
+
+function authHeaders(token: string): HeadersInit {
+  return { Authorization: `Bearer ${token}` };
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -39,9 +55,66 @@ export async function register(email: string, password: string): Promise<Registe
 
 export async function hello(token: string): Promise<HelloResponse> {
   const res = await fetch(`${getBaseUrl()}/hello`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(token),
   });
   const data = await parseJson<HelloResponse | ErrorResponse>(res);
   if (!res.ok) throw new Error((data as ErrorResponse).error ?? res.statusText);
   return data as HelloResponse;
+}
+
+export async function listMedications(token: string): Promise<MedicationsListResponse> {
+  const res = await fetch(`${getBaseUrl()}/medications`, {
+    headers: authHeaders(token),
+  });
+  const data = await parseJson<MedicationsListResponse | ErrorResponse>(res);
+  if (!res.ok) throw new Error((data as ErrorResponse).error ?? res.statusText);
+  return data as MedicationsListResponse;
+}
+
+export async function createMedication(
+  token: string,
+  body: { name: string; dose: string; start_date: string; daily_frequency: number; day_interval: number }
+): Promise<Medication> {
+  const res = await fetch(`${getBaseUrl()}/medications`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify(body),
+  });
+  const data = await parseJson<Medication | ErrorResponse>(res);
+  if (!res.ok) throw new Error((data as ErrorResponse).error ?? res.statusText);
+  return data as Medication;
+}
+
+export async function getMedication(token: string, id: number): Promise<Medication> {
+  const res = await fetch(`${getBaseUrl()}/medications/${id}`, {
+    headers: authHeaders(token),
+  });
+  const data = await parseJson<Medication | ErrorResponse>(res);
+  if (!res.ok) throw new Error((data as ErrorResponse).error ?? res.statusText);
+  return data as Medication;
+}
+
+export async function updateMedication(
+  token: string,
+  id: number,
+  body: { name: string; dose: string; start_date: string; daily_frequency: number; day_interval: number }
+): Promise<Medication> {
+  const res = await fetch(`${getBaseUrl()}/medications/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify(body),
+  });
+  const data = await parseJson<Medication | ErrorResponse>(res);
+  if (!res.ok) throw new Error((data as ErrorResponse).error ?? res.statusText);
+  return data as Medication;
+}
+
+export async function deleteMedication(token: string, id: number): Promise<void> {
+  const res = await fetch(`${getBaseUrl()}/medications/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  });
+  if (res.status === 204) return;
+  const data = await parseJson<ErrorResponse>(res);
+  throw new Error((data as ErrorResponse).error ?? res.statusText);
 }
