@@ -40,6 +40,12 @@ Quick reference:
 - **Schema:** Applied on server startup in `src/db.ts`: `openDatabase()` runs the schema SQL (e.g. `CREATE TABLE IF NOT EXISTS users ...`). No migrations yet; schema is fixed in code.
 - **Local env:** Copy `.env.example` to `.env` in `server/` and set `JWT_SECRET` (and optionally `PORT`, `DB_PATH`). `.env` is gitignored; use it for local dev only.
 
+## Structure
+
+- **models/** — Entity types and DTOs: `User`, `UserRow`, `RegisterInput`, `LoginInput`; `Medication`, `MedicationRow`, `MedicationInput`. No business logic.
+- **services/** — Business logic: `auth` (register, login, validation), `medications` (CRUD + validation), `hello` (getHelloMessage). Services take `db` and other primitives; return result objects or data.
+- **routes/** — HTTP only: parse request, call service, set response status/body. No DB or validation logic in routes.
+
 ## Conventions
 
 - **TypeScript:** Use strict mode. Types for Express (e.g. `req.user`, `app.get('db')`) are in `src/types/express.d.ts`. Use `.ts` for all new server code.
