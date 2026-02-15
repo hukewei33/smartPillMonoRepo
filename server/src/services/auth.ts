@@ -5,6 +5,15 @@ import type { LoginInput, RegisterInput, User, UserRow } from '../models/user';
 import { getJwtSecret } from '../middleware/auth';
 
 const MIN_PASSWORD_LENGTH = 8;
+
+/** Get authenticated user id from JWT payload. Throws if missing or invalid. */
+export function getUserId(payload: { sub?: unknown } | undefined): number {
+  const sub = payload?.sub;
+  if (sub == null || typeof sub !== 'number') {
+    throw new Error('User id missing');
+  }
+  return sub;
+}
 const JWT_EXPIRES_IN = '1h';
 
 function isValidEmail(email: unknown): boolean {

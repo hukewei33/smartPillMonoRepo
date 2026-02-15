@@ -1,21 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import * as authService from '../services/auth';
 import * as medicationsService from '../services/medications';
 
 const router = Router();
 router.use(authMiddleware());
 
-function getUserId(req: Request): number {
-  const sub = req.user?.sub;
-  if (sub == null || typeof sub !== 'number') {
-    throw new Error('User id missing');
-  }
-  return sub;
-}
-
 router.get('/', (req: Request, res: Response) => {
   const db = req.app.get('db');
-  const userId = getUserId(req);
+  const userId = authService.getUserId(req.user);
   const medications = medicationsService.listMedications(db, userId);
   res.json({ medications });
 });
@@ -26,7 +19,7 @@ router.post('/', (req: Request, res: Response) => {
   if (validationError) {
     return res.status(400).json({ error: validationError });
   }
-  const userId = getUserId(req);
+  const userId = authService.getUserId(req.user);
   const input = req.body as {
     name: string;
     dose: string;
@@ -43,7 +36,7 @@ router.post('/', (req: Request, res: Response) => {
 
 router.get('/:id', (req: Request, res: Response) => {
   const db = req.app.get('db');
-  const userId = getUserId(req);
+  const userId = authService.getUserId(req.user);
   const id = Number(req.params.id);
   const result = medicationsService.getMedication(db, userId, id);
   if (!result.ok) {
@@ -58,7 +51,7 @@ router.put('/:id', (req: Request, res: Response) => {
   if (validationError) {
     return res.status(400).json({ error: validationError });
   }
-  const userId = getUserId(req);
+  const userId = authService.getUserId(req.user);
   const id = Number(req.params.id);
   const input = req.body as {
     name: string;
@@ -76,7 +69,7 @@ router.put('/:id', (req: Request, res: Response) => {
 
 router.delete('/:id', (req: Request, res: Response) => {
   const db = req.app.get('db');
-  const userId = getUserId(req);
+  const userId = authService.getUserId(req.user);
   const id = Number(req.params.id);
   const result = medicationsService.deleteMedication(db, userId, id);
   if (!result.ok) {
