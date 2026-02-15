@@ -40,3 +40,8 @@ a {
     color-scheme: dark;
   }
 }
+
+[data-state="active"] {
+  font-weight: 600;
+  border-bottom-color: var(--foreground) !important;
+}

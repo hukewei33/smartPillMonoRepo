@@ -19,6 +19,7 @@ This file tracks objectives and context for the server in the SmartPill monorepo
 2. **Auth (option A)** — jsonwebtoken + express-jwt: register, login, JWT verification middleware setting `req.user`.
 3. **Endpoints** — POST `/auth/register`, POST `/auth/login`, GET `/hello` (protected).
 4. **Tests** — Node `node:test` + supertest; register, login, and hello tests with clean DB and cleanup.
+5. **Medications** — `medications` table (user_id, name, dose, start_date, daily_frequency, day_interval). Authenticated CRUD: GET/POST `/medications`, GET/PUT/DELETE `/medications/:id`; all scoped to `req.user.sub`. Full test coverage including user-scoping (users cannot view/update/delete other users’ medications).
 
 ## API contracts
 
@@ -30,6 +31,20 @@ Quick reference:
 - `POST /auth/register` — body `{ email, password }`; 201 + `{ id, email }` or 400/409
 - `POST /auth/login` — body `{ email, password }`; 200 + `{ token }` or 400/401
 - `GET /hello` — `Authorization: Bearer <token>`; 200 + `{ message }` or 401
+
+## Local dev database
+
+- **Engine:** SQLite via better-sqlite3 (single file, no separate process).
+- **Default path:** `server/data/smartpill.db`. The `data/` directory is created automatically on first run if it doesn’t exist.
+- **Override:** Set `DB_PATH` in `.env` (e.g. `DB_PATH=./data/smartpill.db` or an absolute path) to use a different file.
+- **Schema:** Applied on server startup in `src/db.ts`: `openDatabase()` runs the schema SQL (e.g. `CREATE TABLE IF NOT EXISTS users ...`). No migrations yet; schema is fixed in code.
+- **Local env:** Copy `.env.example` to `.env` in `server/` and set `JWT_SECRET` (and optionally `PORT`, `DB_PATH`). `.env` is gitignored; use it for local dev only.
+
+## Structure
+
+- **models/** — Entity types and DTOs: `User`, `UserRow`, `RegisterInput`, `LoginInput`; `Medication`, `MedicationRow`, `MedicationInput`. No business logic.
+- **services/** — Business logic: `auth` (register, login, validation), `medications` (CRUD + validation), `hello` (getHelloMessage). Services take `db` and other primitives; return result objects or data.
+- **routes/** — HTTP only: parse request, call service, set response status/body. No DB or validation logic in routes.
 
 ## Conventions
 

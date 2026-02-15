@@ -24,6 +24,31 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS medications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  dose TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  daily_frequency INTEGER NOT NULL,
+  day_interval INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_medications_user_id ON medications (user_id);
+
+CREATE TABLE IF NOT EXISTS medication_consumptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  medication_id INTEGER NOT NULL,
+  date TEXT NOT NULL,
+  time TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (medication_id) REFERENCES medications (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_medication_consumptions_medication_id ON medication_consumptions (medication_id);
 `;
 
 export function openDatabase(dbPath: string = getDbPath()): DatabaseInstance {
