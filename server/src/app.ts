@@ -1,8 +1,10 @@
+import cors from 'cors';
 import express from 'express';
 import authRoutes from './routes/auth';
 import helloRoutes from './routes/hello';
 
 const app = express();
+app.use(cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:3001', credentials: true }));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
