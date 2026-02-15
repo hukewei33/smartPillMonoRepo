@@ -2,9 +2,13 @@
 
 This file tracks objectives and context for the server in the SmartPill monorepo so Cursor (and humans) can stay aligned.
 
+## Language and tooling
+
+- **Use TypeScript** for all server code. Source lives in `src/` and `test/` (`.ts`). Build with `npm run build` (output in `dist/`). Run with `npm start` (runs compiled JS) or `npm run dev` (tsx watch). Tests run against compiled code: `npm test` runs `pretest` (build) then `node --test dist/test/`.
+
 ## Objectives (current)
 
-- **MVP for smart medication consumption tracking.** Backend lives in `./server`; web client will live in `./webClient`. This repo is JS-based: Node.js backend, Next.js frontend (when added).
+- **MVP for smart medication consumption tracking.** Backend lives in `./server`; web client will live in `./webClient`. This repo is JS/TS-based: Node.js backend (TypeScript), Next.js frontend (when added).
 - **Auth for web, mobile, and IoT.** Use stateless JWT (Bearer token) so the same API can serve all clients. No custom security: use established libs (e.g. jsonwebtoken, express-jwt, argon2).
 - **Relational DB.** SQLite via better-sqlite3 for this phase; single DB file, schema applied on startup.
 - **Testability.** Tests use a clean in-memory SQLite DB per test and close it in `afterEach`. No shared DB state between tests.
@@ -29,5 +33,6 @@ Quick reference:
 
 ## Conventions
 
+- **TypeScript:** Use strict mode. Types for Express (e.g. `req.user`, `app.get('db')`) are in `src/types/express.d.ts`. Use `.ts` for all new server code.
 - **Env:** `PORT`, `JWT_SECRET`; optional `DB_PATH`. Use `.env` and `.env.example` (no secrets in repo).
-- **Tests:** `npm test` runs `node --test test/` with `JWT_SECRET=test-secret`. Each test gets a fresh `:memory:` DB and closes it in `afterEach`.
+- **Tests:** `npm test` builds then runs `node --test dist/test/` with `JWT_SECRET=test-secret`. Each test gets a fresh `:memory:` DB and closes it in `afterEach`.

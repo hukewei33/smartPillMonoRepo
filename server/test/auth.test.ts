@@ -1,11 +1,13 @@
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
-const request = require('supertest');
-const { createTestApp } = require('./helpers');
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import assert from 'node:assert';
+import request from 'supertest';
+import { createTestApp } from './helpers';
+import type { Express } from 'express';
+import type { DatabaseInstance } from '../src/db';
 
 describe('POST /auth/register', () => {
-  let app;
-  let db;
+  let app: Express;
+  let db: DatabaseInstance | null;
 
   beforeEach(() => {
     process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -27,7 +29,7 @@ describe('POST /auth/register', () => {
       .send({ email: 'alice@example.com', password: 'password123' })
       .expect(201);
     assert.strictEqual(res.body.email, 'alice@example.com');
-    assert(typeof res.body.id === 'number');
+    assert.strictEqual(typeof res.body.id, 'number');
   });
 
   it('returns 409 when email already registered', async () => {
@@ -68,8 +70,8 @@ describe('POST /auth/register', () => {
 });
 
 describe('POST /auth/login', () => {
-  let app;
-  let db;
+  let app: Express;
+  let db: DatabaseInstance | null;
 
   beforeEach(() => {
     process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';

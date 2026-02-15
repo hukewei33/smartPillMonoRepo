@@ -1,21 +1,23 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+import Database from 'better-sqlite3';
+import path from 'path';
+import fs from 'fs';
+
+export type DatabaseInstance = InstanceType<typeof Database>;
 
 const defaultPath = path.join(__dirname, '..', 'data', 'smartpill.db');
 
-function getDbPath() {
-  return process.env.DB_PATH || defaultPath;
+export function getDbPath(): string {
+  return process.env.DB_PATH ?? defaultPath;
 }
 
-function ensureDataDir(dbPath) {
+function ensureDataDir(dbPath: string): void {
   const dir = path.dirname(dbPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 }
 
-const schema = `
+export const schema = `
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE,
@@ -24,7 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 `;
 
-function openDatabase(dbPath = getDbPath()) {
+export function openDatabase(dbPath: string = getDbPath()): DatabaseInstance {
   if (dbPath !== ':memory:') {
     ensureDataDir(dbPath);
   }
@@ -32,9 +34,3 @@ function openDatabase(dbPath = getDbPath()) {
   db.exec(schema);
   return db;
 }
-
-module.exports = {
-  openDatabase,
-  getDbPath,
-  schema,
-};

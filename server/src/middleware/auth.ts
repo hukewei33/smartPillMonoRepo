@@ -1,6 +1,6 @@
-const { expressjwt: expressJwt } = require('express-jwt');
+import { expressjwt } from 'express-jwt';
 
-function getJwtSecret() {
+export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is required');
@@ -8,12 +8,10 @@ function getJwtSecret() {
   return secret;
 }
 
-function authMiddleware() {
-  return expressJwt({
+export function authMiddleware() {
+  return expressjwt({
     secret: getJwtSecret(),
     algorithms: ['HS256'],
     requestProperty: 'user',
   });
 }
-
-module.exports = { authMiddleware, getJwtSecret };

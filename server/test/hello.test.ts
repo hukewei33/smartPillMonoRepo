@@ -1,14 +1,16 @@
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
-const request = require('supertest');
-const jwt = require('jsonwebtoken');
-const { createTestApp } = require('./helpers');
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import assert from 'node:assert';
+import request from 'supertest';
+import jwt from 'jsonwebtoken';
+import { createTestApp } from './helpers';
+import type { Express } from 'express';
+import type { DatabaseInstance } from '../src/db';
 
 const TEST_SECRET = 'test-secret';
 
 describe('GET /hello', () => {
-  let app;
-  let db;
+  let app: Express;
+  let db: DatabaseInstance | null;
 
   beforeEach(() => {
     process.env.JWT_SECRET = TEST_SECRET;
