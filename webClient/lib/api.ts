@@ -141,3 +141,36 @@ export async function createMedicationConsumption(
   if (!res.ok) throw new Error((data as ErrorResponse).error ?? res.statusText);
   return data as MedicationConsumption;
 }
+
+export type ExpectedConsumption = {
+  medication_id: number;
+  medication_name: string;
+  dose_index: number;
+};
+
+export type ActualConsumptionReport = {
+  id: number;
+  medication_id: number;
+  medication_name: string;
+  date: string;
+  time: string;
+};
+
+export type DayResult = {
+  date: string;
+  expected: ExpectedConsumption[];
+  actual: ActualConsumptionReport[];
+};
+
+export async function getConsumptionReport(
+  token: string,
+  startDate: string
+): Promise<DayResult[]> {
+  const params = new URLSearchParams({ start_date: startDate });
+  const res = await fetch(`${getBaseUrl()}/consumption-report?${params}`, {
+    headers: authHeaders(token),
+  });
+  const data = await parseJson<DayResult[] | ErrorResponse>(res);
+  if (!res.ok) throw new Error((data as ErrorResponse).error ?? res.statusText);
+  return data as DayResult[];
+}
