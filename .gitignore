@@ -1,3 +1,6 @@
+# Monorepo: patterns apply to all directories (e.g. ./server).
+# Do not add leading slashes to shared patterns so they still match in subdirs.
+
 # Logs
 logs
 *.log
@@ -137,3 +140,7 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+
+
+server/data/*
