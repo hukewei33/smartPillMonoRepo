@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import {
   createMedication,
+  createMedicationConsumption,
   deleteMedication,
   hello,
   listMedications,
@@ -45,6 +46,13 @@ export default function HomePage() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [loggingConsumptionForId, setLoggingConsumptionForId] = useState<number | null>(null);
+  const [consumptionDate, setConsumptionDate] = useState(() =>
+    new Date().toISOString().slice(0, 10)
+  );
+  const [consumptionTime, setConsumptionTime] = useState('08:00');
+  const [consumptionLoading, setConsumptionLoading] = useState(false);
+  const [consumptionError, setConsumptionError] = useState<string | null>(null);
 
   const fetchMedications = useCallback(async () => {
     const token = getToken();
@@ -158,6 +166,37 @@ export default function HomePage() {
       await fetchMedications();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Delete failed');
+    }
+  }
+
+  function openLogConsumption(med: Medication) {
+    setLoggingConsumptionForId(med.id);
+    setConsumptionDate(new Date().toISOString().slice(0, 10));
+    setConsumptionTime('08:00');
+    setConsumptionError(null);
+  }
+
+  function cancelLogConsumption() {
+    setLoggingConsumptionForId(null);
+    setConsumptionError(null);
+  }
+
+  async function handleLogConsumption(e: React.FormEvent, medicationId: number) {
+    e.preventDefault();
+    const token = getToken();
+    if (!token) return;
+    setConsumptionError(null);
+    setConsumptionLoading(true);
+    try {
+      await createMedicationConsumption(token, medicationId, {
+        date: consumptionDate,
+        time: consumptionTime,
+      });
+      setLoggingConsumptionForId(null);
+    } catch (err) {
+      setConsumptionError(err instanceof Error ? err.message : 'Failed to log consumption');
+    } finally {
+      setConsumptionLoading(false);
     }
   }
 
@@ -278,41 +317,96 @@ export default function HomePage() {
                 borderRadius: 8,
                 marginBottom: 8,
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
+                flexDirection: 'column',
                 gap: 8,
               }}
             >
-              <span style={{ flex: '1 1 200px' }}>{formatMedication(med)}</span>
-              <span style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={() => openEdit(med)}>
-                  Edit
-                </button>
-                {deleteConfirmId === med.id ? (
-                  <>
-                    <span>Delete?</span>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                }}
+              >
+                <span style={{ flex: '1 1 200px' }}>{formatMedication(med)}</span>
+                <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button type="button" onClick={() => openLogConsumption(med)}>
+                    Log consumption
+                  </button>
+                  <button type="button" onClick={() => openEdit(med)}>
+                    Edit
+                  </button>
+                  {deleteConfirmId === med.id ? (
+                    <>
+                      <span>Delete?</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(med.id)}
+                        style={{ background: '#c00', color: '#fff' }}
+                      >
+                        Yes
+                      </button>
+                      <button type="button" onClick={() => setDeleteConfirmId(null)}>
+                        No
+                      </button>
+                    </>
+                  ) : (
                     <button
                       type="button"
-                      onClick={() => handleDelete(med.id)}
-                      style={{ background: '#c00', color: '#fff' }}
+                      onClick={() => setDeleteConfirmId(med.id)}
+                      style={{ color: '#c00' }}
                     >
-                      Yes
+                      Delete
                     </button>
-                    <button type="button" onClick={() => setDeleteConfirmId(null)}>
-                      No
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setDeleteConfirmId(med.id)}
-                    style={{ color: '#c00' }}
-                  >
-                    Delete
+                  )}
+                </span>
+              </div>
+              {loggingConsumptionForId === med.id && (
+                <form
+                  onSubmit={(e) => handleLogConsumption(e, med.id)}
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                    alignItems: 'center',
+                    padding: 8,
+                    background: '#f8f8f8',
+                    borderRadius: 6,
+                  }}
+                >
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    Date
+                    <input
+                      type="date"
+                      value={consumptionDate}
+                      onChange={(e) => setConsumptionDate(e.target.value)}
+                      required
+                      style={{ padding: 4 }}
+                    />
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    Time
+                    <input
+                      type="time"
+                      value={consumptionTime}
+                      onChange={(e) => setConsumptionTime(e.target.value)}
+                      required
+                      style={{ padding: 4 }}
+                    />
+                  </label>
+                  <button type="submit" disabled={consumptionLoading}>
+                    {consumptionLoading ? 'Logging…' : 'Log'}
                   </button>
-                )}
-              </span>
+                  <button type="button" onClick={cancelLogConsumption}>
+                    Cancel
+                  </button>
+                  {consumptionError && (
+                    <span style={{ color: 'red', width: '100%' }}>{consumptionError}</span>
+                  )}
+                </form>
+              )}
             </li>
           ))}
         </ul>

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import * as authService from '../services/auth';
+import * as consumptionsService from '../services/consumptions';
 import * as medicationsService from '../services/medications';
 
 const router = Router();
@@ -32,6 +33,22 @@ router.post('/', (req: Request, res: Response) => {
     return res.status(400).json({ error: result.error });
   }
   return res.status(201).json(result.medication);
+});
+
+router.post('/:id/consumptions', (req: Request, res: Response) => {
+  const db = req.app.get('db');
+  const validationError = consumptionsService.validateConsumptionInput(req.body);
+  if (validationError) {
+    return res.status(400).json({ error: validationError });
+  }
+  const userId = authService.getUserId(req.user);
+  const medicationId = Number(req.params.id);
+  const input = req.body as { date: string; time: string };
+  const result = consumptionsService.createConsumption(db, userId, medicationId, input);
+  if (!result.ok) {
+    return res.status(result.status).json({ error: result.error });
+  }
+  return res.status(201).json(result.consumption);
 });
 
 router.get('/:id', (req: Request, res: Response) => {

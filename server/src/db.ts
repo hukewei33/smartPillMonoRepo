@@ -38,6 +38,17 @@ CREATE TABLE IF NOT EXISTS medications (
 );
 
 CREATE INDEX IF NOT EXISTS idx_medications_user_id ON medications (user_id);
+
+CREATE TABLE IF NOT EXISTS medication_consumptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  medication_id INTEGER NOT NULL,
+  date TEXT NOT NULL,
+  time TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (medication_id) REFERENCES medications (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_medication_consumptions_medication_id ON medication_consumptions (medication_id);
 `;
 
 export function openDatabase(dbPath: string = getDbPath()): DatabaseInstance {

@@ -223,6 +223,39 @@ Delete a medication. Returns 404 if the medication does not exist or does not be
 
 ---
 
+### POST /medications/:id/consumptions
+
+Log a medication consumption for the given medication. The medication must belong to the authenticated user (returns 404 otherwise).
+
+**Headers:** `Authorization: Bearer <token>` (required).
+
+**Request body:**
+
+| Field  | Type   | Required | Notes                          |
+| ------ | ------ | -------- | ------------------------------ |
+| `date` | string | yes      | Date of consumption (YYYY-MM-DD). |
+| `time` | string | yes      | Time of consumption (HH:MM or HH:MM:SS). |
+
+**Responses:**
+
+- **201 Created** — Consumption logged.
+
+  ```json
+  {
+    "id": 1,
+    "medication_id": 1,
+    "date": "2025-02-15",
+    "time": "08:30",
+    "created_at": "2025-02-15T12:00:00.000Z"
+  }
+  ```
+
+- **400 Bad Request** — Validation failed or invalid medication `id`. Body: `{ "error": "<message>" }`.
+- **401 Unauthorized** — Missing or invalid token.
+- **404 Not Found** — Medication not found or not owned by user. Body: `{ "error": "Medication not found" }`.
+
+---
+
 ## Summary
 
 | Method | Path               | Auth   | Purpose                    |
@@ -236,3 +269,4 @@ Delete a medication. Returns 404 if the medication does not exist or does not be
 | GET    | /medications/:id   | Bearer | Get one medication        |
 | PUT    | /medications/:id   | Bearer | Update medication          |
 | DELETE | /medications/:id   | Bearer | Delete medication          |
+| POST   | /medications/:id/consumptions | Bearer | Log medication consumption |

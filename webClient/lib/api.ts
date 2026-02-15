@@ -21,6 +21,14 @@ export type Medication = {
 
 export type MedicationsListResponse = { medications: Medication[] };
 
+export type MedicationConsumption = {
+  id: number;
+  medication_id: number;
+  date: string;
+  time: string;
+  created_at: string;
+};
+
 async function parseJson<T>(res: Response): Promise<T> {
   const text = await res.text();
   if (!text) return {} as T;
@@ -117,4 +125,19 @@ export async function deleteMedication(token: string, id: number): Promise<void>
   if (res.status === 204) return;
   const data = await parseJson<ErrorResponse>(res);
   throw new Error((data as ErrorResponse).error ?? res.statusText);
+}
+
+export async function createMedicationConsumption(
+  token: string,
+  medicationId: number,
+  body: { date: string; time: string }
+): Promise<MedicationConsumption> {
+  const res = await fetch(`${getBaseUrl()}/medications/${medicationId}/consumptions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify(body),
+  });
+  const data = await parseJson<MedicationConsumption | ErrorResponse>(res);
+  if (!res.ok) throw new Error((data as ErrorResponse).error ?? res.statusText);
+  return data as MedicationConsumption;
 }
