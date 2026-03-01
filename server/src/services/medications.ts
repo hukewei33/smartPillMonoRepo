@@ -1,6 +1,13 @@
 import type { DatabaseInstance } from '../db';
 import type { Medication, MedicationInput, MedicationRow } from '../models/medication';
 
+function isValidDateString(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, d] = s.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+}
+
 function rowToMedication(row: MedicationRow): Medication {
   return {
     id: row.id,
@@ -31,8 +38,7 @@ export function validateMedicationInput(body: unknown): string | null {
   if (typeof b.day_interval !== 'number' || b.day_interval < 1 || !Number.isInteger(b.day_interval)) {
     return 'Day interval must be a positive integer';
   }
-  const date = new Date((b.start_date as string).trim());
-  if (Number.isNaN(date.getTime())) return 'Invalid start date';
+  if (!isValidDateString((b.start_date as string).trim())) return 'Invalid start date';
   return null;
 }
 

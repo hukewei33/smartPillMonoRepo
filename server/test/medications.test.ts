@@ -282,6 +282,38 @@ describe('Medications API', () => {
         .expect(400);
       assert.ok(res.body.error);
     });
+
+    it('returns 400 for start_date with invalid month (e.g. 2025-13-01)', async () => {
+      const token = await getToken(app, 'dateA@example.com', 'password123');
+      const res = await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'Med',
+          dose: '10mg',
+          start_date: '2025-13-01',
+          times: ['08:00'],
+          day_interval: 1,
+        })
+        .expect(400);
+      assert.ok(res.body.error);
+    });
+
+    it('returns 400 for start_date not in YYYY-MM-DD format (e.g. 2025-1-1)', async () => {
+      const token = await getToken(app, 'dateB@example.com', 'password123');
+      const res = await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'Med',
+          dose: '10mg',
+          start_date: '2025-1-1',
+          times: ['08:00'],
+          day_interval: 1,
+        })
+        .expect(400);
+      assert.ok(res.body.error);
+    });
   });
 
   describe('GET /medications/:id', () => {
