@@ -384,6 +384,39 @@ describe('Medications API', () => {
         })
         .expect(404);
     });
+
+    it('PUT response contains the updated medication data (not another user\'s data)', async () => {
+      // Two users, each with one medication. After A updates their medication,
+      // the response must contain A's updated data, not B's row.
+      const tokenA = await getToken(app, 'putscopeA@example.com', 'password123');
+      const tokenB = await getToken(app, 'putscopeB@example.com', 'password123');
+
+      const resA = await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ name: 'MedA', dose: '1mg', start_date: '2025-01-01', times: ['08:00'], day_interval: 1 })
+        .expect(201);
+
+      // B creates their medication so the table has two rows
+      await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({ name: 'MedB', dose: '999mg', start_date: '2025-01-01', times: ['09:00'], day_interval: 2 })
+        .expect(201);
+
+      const updateRes = await request(app)
+        .put(`/medications/${resA.body.id}`)
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ name: 'MedA Updated', dose: '2mg', start_date: '2025-06-01', times: ['10:00'], day_interval: 3 })
+        .expect(200);
+
+      // The response must be A's updated medication, not B's row
+      assert.strictEqual(updateRes.body.id, resA.body.id);
+      assert.strictEqual(updateRes.body.name, 'MedA Updated');
+      assert.strictEqual(updateRes.body.dose, '2mg');
+      assert.deepStrictEqual(updateRes.body.times, ['10:00']);
+      assert.strictEqual(updateRes.body.day_interval, 3);
+    });
   });
 
   describe('DELETE /medications/:id', () => {

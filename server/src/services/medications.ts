@@ -129,9 +129,9 @@ export function updateMedication(
   );
   const row = db
     .prepare(
-      'SELECT id, user_id, name, dose, start_date, times, day_interval, created_at FROM medications WHERE id = ?'
+      'SELECT id, user_id, name, dose, start_date, times, day_interval, created_at FROM medications WHERE id = ? AND user_id = ?'
     )
-    .get(id) as MedicationRow;
+    .get(id, userId) as MedicationRow;
   return { ok: true, medication: rowToMedication(row) };
 }
 
