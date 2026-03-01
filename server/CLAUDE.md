@@ -9,6 +9,9 @@ npm run dev       # tsx watch with hot reload
 npm run build     # Compile TypeScript → dist/
 npm start         # Run compiled dist/src/index.js
 npm test          # Build then run node --test dist/test/
+npm run lint      # Biome lint (src/ and test/)
+npm run format    # Biome format with auto-write (src/ and test/)
+npm run check     # Biome check — read-only lint + format validation (CI-safe)
 ```
 
 Run a single test file (after building):

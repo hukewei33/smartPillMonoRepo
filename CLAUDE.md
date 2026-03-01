@@ -19,6 +19,9 @@ npm run dev       # tsx watch (hot reload)
 npm run build     # Compile TypeScript → dist/
 npm start         # Run compiled dist/src/index.js
 npm test          # Build then run node --test on dist/test/
+npm run lint      # Biome lint
+npm run format    # Biome format (auto-writes)
+npm run check     # Biome check (CI-safe, read-only)
 ```
 
 ### Client (`cd webClient`)

@@ -9,6 +9,7 @@
     "dev": "tsx watch src/index.ts",
     "lint": "biome lint src/ test/",
     "format": "biome format --write src/ test/",
+    "check": "biome check src/ test/",
     "test": "JWT_SECRET=test-secret node --test dist/test/",
     "pretest": "npm run build"
   },
