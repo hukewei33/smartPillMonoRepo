@@ -25,6 +25,8 @@ JWT_SECRET=test-secret node --test dist/test/auth.test.js
 
 **Full API reference is in [API.md](./API.md).** Read it before adding or modifying any endpoint. It documents request/response shapes, validation rules, status codes, and auth requirements for every route.
 
+**Keep it in sync:** Any change to a route path, HTTP method, request field, response field, status code, or validation rule **must** be reflected in `API.md` in the same commit/PR. A feature is not done until the code and `API.md` agree.
+
 Quick endpoint summary:
 
 | Method | Path | Auth | Purpose |

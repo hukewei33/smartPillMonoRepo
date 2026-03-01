@@ -140,7 +140,7 @@ List all medications for the authenticated user.
         "name": "Aspirin",
         "dose": "100mg",
         "start_date": "2025-01-01",
-        "daily_frequency": 2,
+        "times": ["08:00", "14:00"],
         "day_interval": 1,
         "created_at": "2025-01-01T12:00:00.000Z"
       }
@@ -160,13 +160,13 @@ Create a new medication for the authenticated user.
 
 **Request body:**
 
-| Field             | Type   | Required | Notes                        |
-| ----------------- | ------ | -------- | ---------------------------- |
-| `name`            | string | yes      | Medication name.             |
-| `dose`            | string | yes      | e.g. `"100mg"`, `"2000 IU"`. |
-| `start_date`      | string | yes      | ISO date (e.g. `YYYY-MM-DD`). |
-| `daily_frequency` | number | yes      | Positive integer (times/day). |
-| `day_interval`   | number | yes      | Positive integer (e.g. 1 = daily, 2 = every 2 days). |
+| Field          | Type       | Required | Notes                                                      |
+| -------------- | ---------- | -------- | ---------------------------------------------------------- |
+| `name`         | string     | yes      | Medication name.                                           |
+| `dose`         | string     | yes      | e.g. `"100mg"`, `"2000 IU"`.                              |
+| `start_date`   | string     | yes      | ISO date (`YYYY-MM-DD`).                                   |
+| `times`        | string[]   | yes      | Non-empty array of `HH:MM` dose times (e.g. `["08:00", "14:00"]`). Each must have hours 0–23 and minutes 0–59. |
+| `day_interval` | number     | yes      | Positive integer (1 = daily, 2 = every other day, etc.).  |
 
 **Responses:**
 
@@ -197,7 +197,7 @@ Update a medication. Returns 404 if the medication does not exist or does not be
 
 **Headers:** `Authorization: Bearer <token>` (required).
 
-**Request body:** Same as POST /medications (all fields required).
+**Request body:** Same fields as POST /medications — `name`, `dose`, `start_date`, `times`, `day_interval` — all required.
 
 **Responses:**
 
@@ -275,7 +275,7 @@ Returns a 7-day weekly report of expected and actual medication consumption for 
   Each element:
 
   - `date` — YYYY-MM-DD.
-  - `expected` — Array of expected consumption slots derived from the user’s medications (start_date, day_interval, daily_frequency). Each slot: `{ medication_id, medication_name, dose_index }`.
+  - `expected` — Array of expected dose slots derived from the user’s medications (`start_date`, `day_interval`, `times`). One entry per time in `times` on each dose day. Each slot: `{ medication_id, medication_name, time }`.
   - `actual` — Array of logged consumptions for that date. Each: `{ id, medication_id, medication_name, date, time }`.
 
   Example (first day only):
@@ -285,8 +285,8 @@ Returns a 7-day weekly report of expected and actual medication consumption for 
     {
       "date": "2025-02-15",
       "expected": [
-        { "medication_id": 1, "medication_name": "Aspirin", "dose_index": 1 },
-        { "medication_id": 1, "medication_name": "Aspirin", "dose_index": 2 }
+        { "medication_id": 1, "medication_name": "Aspirin", "time": "08:00" },
+        { "medication_id": 1, "medication_name": "Aspirin", "time": "14:00" }
       ],
       "actual": [
         { "id": 1, "medication_id": 1, "medication_name": "Aspirin", "date": "2025-02-15", "time": "08:00" }
