@@ -1,12 +1,14 @@
-import { openDatabase } from '../src/db';
-import app from '../src/app';
+import type { Express } from 'express';
+import { createApp } from '../src/app';
+import { type DatabaseInstance, openDatabase } from '../src/db';
 
 /**
- * Creates a fresh in-memory DB and attaches it to the app.
- * Returns { app, db }. Caller must call db.close() in afterEach/after to clean up.
+ * Creates a fresh Express app instance with its own in-memory DB.
+ * Returns { app, db }. Caller must call db.close() in afterEach to clean up.
  */
-export function createTestApp(): { app: typeof app; db: ReturnType<typeof openDatabase> } {
+export function createTestApp(): { app: Express; db: DatabaseInstance } {
   const db = openDatabase(':memory:');
+  const app = createApp();
   app.set('db', db);
   return { app, db };
 }

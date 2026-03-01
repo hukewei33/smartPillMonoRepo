@@ -9,6 +9,9 @@ npm run dev       # tsx watch with hot reload
 npm run build     # Compile TypeScript → dist/
 npm start         # Run compiled dist/src/index.js
 npm test          # Build then run node --test dist/test/
+npm run lint      # Biome lint (src/ and test/)
+npm run format    # Biome format with auto-write (src/ and test/)
+npm run check     # Biome check — read-only lint + format validation (CI-safe)
 ```
 
 Run a single test file (after building):
@@ -24,6 +27,8 @@ JWT_SECRET=test-secret node --test dist/test/auth.test.js
 ## API Contract
 
 **Full API reference is in [API.md](./API.md).** Read it before adding or modifying any endpoint. It documents request/response shapes, validation rules, status codes, and auth requirements for every route.
+
+**Keep it in sync:** Any change to a route path, HTTP method, request field, response field, status code, or validation rule **must** be reflected in `API.md` in the same commit/PR. A feature is not done until the code and `API.md` agree.
 
 Quick endpoint summary:
 

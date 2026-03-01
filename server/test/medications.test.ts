@@ -1,9 +1,9 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import request from 'supertest';
-import { createTestApp } from './helpers';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { Express } from 'express';
+import request from 'supertest';
 import type { DatabaseInstance } from '../src/db';
+import { createTestApp } from './helpers';
 
 const TEST_SECRET = 'test-secret';
 
@@ -244,7 +244,13 @@ describe('Medications API', () => {
         await request(app)
           .post('/medications')
           .set('Authorization', `Bearer ${token}`)
-          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['8:00'], day_interval: 1 })
+          .send({
+            name: 'Med',
+            dose: '10mg',
+            start_date: '2025-01-01',
+            times: ['8:00'],
+            day_interval: 1,
+          })
           .expect(400);
       });
 
@@ -253,7 +259,13 @@ describe('Medications API', () => {
         await request(app)
           .post('/medications')
           .set('Authorization', `Bearer ${token}`)
-          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['25:00'], day_interval: 1 })
+          .send({
+            name: 'Med',
+            dose: '10mg',
+            start_date: '2025-01-01',
+            times: ['25:00'],
+            day_interval: 1,
+          })
           .expect(400);
       });
 
@@ -262,7 +274,13 @@ describe('Medications API', () => {
         await request(app)
           .post('/medications')
           .set('Authorization', `Bearer ${token}`)
-          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['08:60'], day_interval: 1 })
+          .send({
+            name: 'Med',
+            dose: '10mg',
+            start_date: '2025-01-01',
+            times: ['08:60'],
+            day_interval: 1,
+          })
           .expect(400);
       });
     });
@@ -276,6 +294,38 @@ describe('Medications API', () => {
           name: 'Med',
           dose: '10mg',
           start_date: 'not-a-date',
+          times: ['08:00'],
+          day_interval: 1,
+        })
+        .expect(400);
+      assert.ok(res.body.error);
+    });
+
+    it('returns 400 for start_date with invalid month (e.g. 2025-13-01)', async () => {
+      const token = await getToken(app, 'dateA@example.com', 'password123');
+      const res = await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'Med',
+          dose: '10mg',
+          start_date: '2025-13-01',
+          times: ['08:00'],
+          day_interval: 1,
+        })
+        .expect(400);
+      assert.ok(res.body.error);
+    });
+
+    it('returns 400 for start_date not in YYYY-MM-DD format (e.g. 2025-1-1)', async () => {
+      const token = await getToken(app, 'dateB@example.com', 'password123');
+      const res = await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'Med',
+          dose: '10mg',
+          start_date: '2025-1-1',
           times: ['08:00'],
           day_interval: 1,
         })
@@ -384,6 +434,57 @@ describe('Medications API', () => {
         })
         .expect(404);
     });
+
+    it("PUT response contains the updated medication data (not another user's data)", async () => {
+      // Two users, each with one medication. After A updates their medication,
+      // the response must contain A's updated data, not B's row.
+      const tokenA = await getToken(app, 'putscopeA@example.com', 'password123');
+      const tokenB = await getToken(app, 'putscopeB@example.com', 'password123');
+
+      const resA = await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({
+          name: 'MedA',
+          dose: '1mg',
+          start_date: '2025-01-01',
+          times: ['08:00'],
+          day_interval: 1,
+        })
+        .expect(201);
+
+      // B creates their medication so the table has two rows
+      await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({
+          name: 'MedB',
+          dose: '999mg',
+          start_date: '2025-01-01',
+          times: ['09:00'],
+          day_interval: 2,
+        })
+        .expect(201);
+
+      const updateRes = await request(app)
+        .put(`/medications/${resA.body.id}`)
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({
+          name: 'MedA Updated',
+          dose: '2mg',
+          start_date: '2025-06-01',
+          times: ['10:00'],
+          day_interval: 3,
+        })
+        .expect(200);
+
+      // The response must be A's updated medication, not B's row
+      assert.strictEqual(updateRes.body.id, resA.body.id);
+      assert.strictEqual(updateRes.body.name, 'MedA Updated');
+      assert.strictEqual(updateRes.body.dose, '2mg');
+      assert.deepStrictEqual(updateRes.body.times, ['10:00']);
+      assert.strictEqual(updateRes.body.day_interval, 3);
+    });
   });
 
   describe('DELETE /medications/:id', () => {
@@ -430,6 +531,54 @@ describe('Medications API', () => {
         .delete(`/medications/${createRes.body.id}`)
         .set('Authorization', `Bearer ${tokenB}`)
         .expect(404);
+    });
+
+    it('deletes associated consumption records when medication is deleted', async () => {
+      const token = await getToken(app, 'cascade@example.com', 'password123');
+
+      // Create a medication
+      const createRes = await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'To Cascade Delete',
+          dose: '10mg',
+          start_date: '2025-01-01',
+          times: ['08:00'],
+          day_interval: 1,
+        })
+        .expect(201);
+      const medId = createRes.body.id as number;
+
+      // Log a consumption
+      await request(app)
+        .post(`/medications/${medId}/consumptions`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ date: '2025-01-01', time: '08:00' })
+        .expect(201);
+
+      // Verify consumption exists before deletion
+      assert.ok(db, 'db should be initialized');
+      const beforeCount = (
+        db
+          .prepare('SELECT COUNT(*) as count FROM medication_consumptions WHERE medication_id = ?')
+          .get(medId) as { count: number }
+      ).count;
+      assert.strictEqual(beforeCount, 1, 'consumption should exist before delete');
+
+      // Delete the medication
+      await request(app)
+        .delete(`/medications/${medId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(204);
+
+      // Consumption row must be gone
+      const afterCount = (
+        db
+          .prepare('SELECT COUNT(*) as count FROM medication_consumptions WHERE medication_id = ?')
+          .get(medId) as { count: number }
+      ).count;
+      assert.strictEqual(afterCount, 0, 'consumption should be deleted with its medication');
     });
   });
 });

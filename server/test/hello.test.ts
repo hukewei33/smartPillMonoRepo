@@ -1,10 +1,10 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import request from 'supertest';
-import jwt from 'jsonwebtoken';
-import { createTestApp } from './helpers';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { Express } from 'express';
+import jwt from 'jsonwebtoken';
+import request from 'supertest';
 import type { DatabaseInstance } from '../src/db';
+import { createTestApp } from './helpers';
 
 const TEST_SECRET = 'test-secret';
 
@@ -32,30 +32,22 @@ describe('GET /hello', () => {
   });
 
   it('returns 401 with invalid token', async () => {
-    await request(app)
-      .get('/hello')
-      .set('Authorization', 'Bearer invalid.jwt.token')
-      .expect(401);
+    await request(app).get('/hello').set('Authorization', 'Bearer invalid.jwt.token').expect(401);
   });
 
   it('returns 401 with expired token', async () => {
-    const token = jwt.sign(
-      { sub: 1, email: 'u@x.com' },
-      TEST_SECRET,
-      { algorithm: 'HS256', expiresIn: '-1h' }
-    );
-    await request(app)
-      .get('/hello')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(401);
+    const token = jwt.sign({ sub: 1, email: 'u@x.com' }, TEST_SECRET, {
+      algorithm: 'HS256',
+      expiresIn: '-1h',
+    });
+    await request(app).get('/hello').set('Authorization', `Bearer ${token}`).expect(401);
   });
 
   it('returns 200 and message with valid token', async () => {
-    const token = jwt.sign(
-      { sub: 1, email: 'hello@example.com' },
-      TEST_SECRET,
-      { algorithm: 'HS256', expiresIn: '1h' }
-    );
+    const token = jwt.sign({ sub: 1, email: 'hello@example.com' }, TEST_SECRET, {
+      algorithm: 'HS256',
+      expiresIn: '1h',
+    });
     const res = await request(app)
       .get('/hello')
       .set('Authorization', `Bearer ${token}`)
@@ -64,11 +56,7 @@ describe('GET /hello', () => {
   });
 
   it('returns 200 with "Hello, world" when payload has no email', async () => {
-    const token = jwt.sign(
-      { sub: 1 },
-      TEST_SECRET,
-      { algorithm: 'HS256', expiresIn: '1h' }
-    );
+    const token = jwt.sign({ sub: 1 }, TEST_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
     const res = await request(app)
       .get('/hello')
       .set('Authorization', `Bearer ${token}`)

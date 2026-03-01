@@ -64,9 +64,7 @@ export function createConsumption(
   const date = input.date.trim();
   const time = input.time.trim();
   const result = db
-    .prepare(
-      'INSERT INTO medication_consumptions (medication_id, date, time) VALUES (?, ?, ?)'
-    )
+    .prepare('INSERT INTO medication_consumptions (medication_id, date, time) VALUES (?, ?, ?)')
     .run(medicationId, date, time);
   const row = db
     .prepare(

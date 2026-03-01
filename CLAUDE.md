@@ -19,6 +19,9 @@ npm run dev       # tsx watch (hot reload)
 npm run build     # Compile TypeScript → dist/
 npm start         # Run compiled dist/src/index.js
 npm test          # Build then run node --test on dist/test/
+npm run lint      # Biome lint
+npm run format    # Biome format (auto-writes)
+npm run check     # Biome check (CI-safe, read-only)
 ```
 
 ### Client (`cd webClient`)
@@ -39,6 +42,12 @@ cd server && npm i && cd ..
 cd webClient && npm i && cd ..
 cp server/.env.example server/.env   # Then set JWT_SECRET (32+ chars)
 ```
+
+## API Contract
+
+**Full API reference: [`server/API.md`](./server/API.md).** Read it before touching any route, service validation, or request/response shape. It is the source of truth for all endpoint contracts.
+
+**Keep it in sync:** Any change to a route path, HTTP method, request field, response field, status code, or validation rule **must** be reflected in `server/API.md` in the same commit/PR. Do not mark a feature done if the code and `server/API.md` disagree.
 
 ## Architecture
 
@@ -71,9 +80,10 @@ Database (SQLite via better-sqlite3, sync API)
 ### Key Schema
 ```sql
 users(id, email, password_hash, created_at)
-medications(id, user_id, name, dose, start_date, daily_frequency, day_interval, created_at)
+medications(id, user_id, name, dose, start_date, times, day_interval, created_at)
 medication_consumptions(id, medication_id, date, time, created_at)
 ```
+`times` is stored as a JSON array of `HH:MM` strings (e.g. `'["08:00","14:00"]'`).
 Medications and consumptions are user-scoped — services always filter by `req.user.sub`.
 
 ### Frontend

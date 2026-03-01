@@ -1,9 +1,9 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import request from 'supertest';
-import { createTestApp } from './helpers';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { Express } from 'express';
+import request from 'supertest';
 import type { DatabaseInstance } from '../src/db';
+import { createTestApp } from './helpers';
 
 describe('POST /auth/register', () => {
   let app: Express;
@@ -121,9 +121,6 @@ describe('POST /auth/login', () => {
   });
 
   it('returns 400 for missing email', async () => {
-    await request(app)
-      .post('/auth/login')
-      .send({ password: 'mypassword123' })
-      .expect(400);
+    await request(app).post('/auth/login').send({ password: 'mypassword123' }).expect(400);
   });
 });
