@@ -19,12 +19,19 @@ export function createApp(): express.Express {
   app.use('/medications', medicationsRoutes);
   app.use('/consumption-report', consumptionReportRoutes);
 
-  app.use((err: Error & { name?: string }, _req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (err.name === 'UnauthorizedError') {
-      return res.status(401).json({ error: 'Invalid or missing token' });
+  app.use(
+    (
+      err: Error & { name?: string },
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      if (err.name === 'UnauthorizedError') {
+        return res.status(401).json({ error: 'Invalid or missing token' });
+      }
+      next(err);
     }
-    next(err);
-  });
+  );
 
   return app;
 }

@@ -24,8 +24,19 @@ function getToken(app: Express, email: string, password: string): Promise<string
 async function createMedication(
   app: Express,
   token: string,
-  overrides: Partial<{ name: string; start_date: string; times: string[]; day_interval: number }> = {}
-): Promise<{ id: number; name: string; start_date: string; times: string[]; day_interval: number }> {
+  overrides: Partial<{
+    name: string;
+    start_date: string;
+    times: string[];
+    day_interval: number;
+  }> = {}
+): Promise<{
+  id: number;
+  name: string;
+  start_date: string;
+  times: string[];
+  day_interval: number;
+}> {
   const res = await request(app)
     .post('/medications')
     .set('Authorization', `Bearer ${token}`)
@@ -66,9 +77,7 @@ describe('GET /consumption-report', () => {
 
   describe('auth', () => {
     it('returns 401 without token', async () => {
-      await request(app)
-        .get('/consumption-report?start_date=2025-02-15')
-        .expect(401);
+      await request(app).get('/consumption-report?start_date=2025-02-15').expect(401);
     });
   });
 
@@ -215,7 +224,10 @@ describe('GET /consumption-report', () => {
     it('only includes medications and consumptions for the authenticated user', async () => {
       const tokenA = await getToken(app, 'alice@example.com', 'password123');
       const tokenB = await getToken(app, 'bob@example.com', 'password123');
-      const medA = await createMedication(app, tokenA, { name: 'Alice Med', start_date: '2025-02-15' });
+      const medA = await createMedication(app, tokenA, {
+        name: 'Alice Med',
+        start_date: '2025-02-15',
+      });
       await createMedication(app, tokenB, { name: 'Bob Med', start_date: '2025-02-15' });
       await request(app)
         .post(`/medications/${medA.id}/consumptions`)

@@ -244,7 +244,13 @@ describe('Medications API', () => {
         await request(app)
           .post('/medications')
           .set('Authorization', `Bearer ${token}`)
-          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['8:00'], day_interval: 1 })
+          .send({
+            name: 'Med',
+            dose: '10mg',
+            start_date: '2025-01-01',
+            times: ['8:00'],
+            day_interval: 1,
+          })
           .expect(400);
       });
 
@@ -253,7 +259,13 @@ describe('Medications API', () => {
         await request(app)
           .post('/medications')
           .set('Authorization', `Bearer ${token}`)
-          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['25:00'], day_interval: 1 })
+          .send({
+            name: 'Med',
+            dose: '10mg',
+            start_date: '2025-01-01',
+            times: ['25:00'],
+            day_interval: 1,
+          })
           .expect(400);
       });
 
@@ -262,7 +274,13 @@ describe('Medications API', () => {
         await request(app)
           .post('/medications')
           .set('Authorization', `Bearer ${token}`)
-          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['08:60'], day_interval: 1 })
+          .send({
+            name: 'Med',
+            dose: '10mg',
+            start_date: '2025-01-01',
+            times: ['08:60'],
+            day_interval: 1,
+          })
           .expect(400);
       });
     });
@@ -417,7 +435,7 @@ describe('Medications API', () => {
         .expect(404);
     });
 
-    it('PUT response contains the updated medication data (not another user\'s data)', async () => {
+    it("PUT response contains the updated medication data (not another user's data)", async () => {
       // Two users, each with one medication. After A updates their medication,
       // the response must contain A's updated data, not B's row.
       const tokenA = await getToken(app, 'putscopeA@example.com', 'password123');
@@ -426,20 +444,38 @@ describe('Medications API', () => {
       const resA = await request(app)
         .post('/medications')
         .set('Authorization', `Bearer ${tokenA}`)
-        .send({ name: 'MedA', dose: '1mg', start_date: '2025-01-01', times: ['08:00'], day_interval: 1 })
+        .send({
+          name: 'MedA',
+          dose: '1mg',
+          start_date: '2025-01-01',
+          times: ['08:00'],
+          day_interval: 1,
+        })
         .expect(201);
 
       // B creates their medication so the table has two rows
       await request(app)
         .post('/medications')
         .set('Authorization', `Bearer ${tokenB}`)
-        .send({ name: 'MedB', dose: '999mg', start_date: '2025-01-01', times: ['09:00'], day_interval: 2 })
+        .send({
+          name: 'MedB',
+          dose: '999mg',
+          start_date: '2025-01-01',
+          times: ['09:00'],
+          day_interval: 2,
+        })
         .expect(201);
 
       const updateRes = await request(app)
         .put(`/medications/${resA.body.id}`)
         .set('Authorization', `Bearer ${tokenA}`)
-        .send({ name: 'MedA Updated', dose: '2mg', start_date: '2025-06-01', times: ['10:00'], day_interval: 3 })
+        .send({
+          name: 'MedA Updated',
+          dose: '2mg',
+          start_date: '2025-06-01',
+          times: ['10:00'],
+          day_interval: 3,
+        })
         .expect(200);
 
       // The response must be A's updated medication, not B's row
@@ -522,7 +558,12 @@ describe('Medications API', () => {
         .expect(201);
 
       // Verify consumption exists before deletion
-      const beforeCount = (db!.prepare('SELECT COUNT(*) as count FROM medication_consumptions WHERE medication_id = ?').get(medId) as { count: number }).count;
+      assert.ok(db, 'db should be initialized');
+      const beforeCount = (
+        db
+          .prepare('SELECT COUNT(*) as count FROM medication_consumptions WHERE medication_id = ?')
+          .get(medId) as { count: number }
+      ).count;
       assert.strictEqual(beforeCount, 1, 'consumption should exist before delete');
 
       // Delete the medication
@@ -532,7 +573,11 @@ describe('Medications API', () => {
         .expect(204);
 
       // Consumption row must be gone
-      const afterCount = (db!.prepare('SELECT COUNT(*) as count FROM medication_consumptions WHERE medication_id = ?').get(medId) as { count: number }).count;
+      const afterCount = (
+        db
+          .prepare('SELECT COUNT(*) as count FROM medication_consumptions WHERE medication_id = ?')
+          .get(medId) as { count: number }
+      ).count;
       assert.strictEqual(afterCount, 0, 'consumption should be deleted with its medication');
     });
   });

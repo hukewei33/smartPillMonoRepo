@@ -1,6 +1,10 @@
 import type { DatabaseInstance } from '../db';
 import type { Medication } from '../models/medication';
-import type { ActualConsumption, DayResult, ExpectedConsumption } from '../models/consumption-report';
+import type {
+  ActualConsumption,
+  DayResult,
+  ExpectedConsumption,
+} from '../models/consumption-report';
 import { listMedications } from './medications';
 
 const REPORT_DAYS = 7;
@@ -33,10 +37,7 @@ function isDoseDay(med: Medication, date: string): boolean {
 }
 
 /** Add expected consumption slots for a medication on a given date. */
-function expectedForMedicationOnDate(
-  med: Medication,
-  date: string
-): ExpectedConsumption[] {
+function expectedForMedicationOnDate(med: Medication, date: string): ExpectedConsumption[] {
   if (!isDoseDay(med, date)) return [];
   return med.times.map((time) => ({
     medication_id: med.id,

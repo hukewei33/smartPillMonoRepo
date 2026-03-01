@@ -121,9 +121,6 @@ describe('POST /auth/login', () => {
   });
 
   it('returns 400 for missing email', async () => {
-    await request(app)
-      .post('/auth/login')
-      .send({ password: 'mypassword123' })
-      .expect(400);
+    await request(app).post('/auth/login').send({ password: 'mypassword123' }).expect(400);
   });
 });

@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import * as authService from '../services/auth';
 import * as consumptionsService from '../services/consumptions';

@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, type Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { getHelloMessage } from '../services/hello';
 

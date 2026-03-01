@@ -41,14 +41,22 @@ export function validateLoginBody(body: unknown): string | null {
 }
 
 function isSqliteUniqueError(e: unknown): e is { code: string } {
-  return typeof e === 'object' && e !== null && 'code' in e && (e as { code: string }).code === 'SQLITE_CONSTRAINT_UNIQUE';
+  return (
+    typeof e === 'object' &&
+    e !== null &&
+    'code' in e &&
+    (e as { code: string }).code === 'SQLITE_CONSTRAINT_UNIQUE'
+  );
 }
 
 export type RegisterResult =
   | { ok: true; user: User }
   | { ok: false; status: 400 | 409; error: string };
 
-export async function register(db: DatabaseInstance, input: RegisterInput): Promise<RegisterResult> {
+export async function register(
+  db: DatabaseInstance,
+  input: RegisterInput
+): Promise<RegisterResult> {
   const trimmedEmail = input.email.trim().toLowerCase();
   try {
     const password_hash = await argon2.hash(input.password);
@@ -84,10 +92,9 @@ export async function login(db: DatabaseInstance, input: LoginInput): Promise<Lo
     return { ok: false, status: 401, error: 'Invalid email or password' };
   }
   const secret = getJwtSecret();
-  const token = jwt.sign(
-    { sub: user.id, email: user.email },
-    secret,
-    { algorithm: 'HS256', expiresIn: JWT_EXPIRES_IN }
-  );
+  const token = jwt.sign({ sub: user.id, email: user.email }, secret, {
+    algorithm: 'HS256',
+    expiresIn: JWT_EXPIRES_IN,
+  });
   return { ok: true, token };
 }

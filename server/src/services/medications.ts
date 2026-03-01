@@ -35,7 +35,11 @@ export function validateMedicationInput(body: unknown): string | null {
     if (hh < 0 || hh > 23 || mm < 0 || mm > 59)
       return 'Each time must have hours 0-23 and minutes 0-59';
   }
-  if (typeof b.day_interval !== 'number' || b.day_interval < 1 || !Number.isInteger(b.day_interval)) {
+  if (
+    typeof b.day_interval !== 'number' ||
+    b.day_interval < 1 ||
+    !Number.isInteger(b.day_interval)
+  ) {
     return 'Day interval must be a positive integer';
   }
   if (!isValidDateString((b.start_date as string).trim())) return 'Invalid start date';
@@ -117,7 +121,9 @@ export function updateMedication(
   if (!Number.isInteger(id) || id < 1) {
     return { ok: false, status: 400, error: 'Invalid medication id' };
   }
-  const existing = db.prepare('SELECT id FROM medications WHERE id = ? AND user_id = ?').get(id, userId);
+  const existing = db
+    .prepare('SELECT id FROM medications WHERE id = ? AND user_id = ?')
+    .get(id, userId);
   if (!existing) {
     return { ok: false, status: 404, error: 'Medication not found' };
   }
@@ -141,9 +147,7 @@ export function updateMedication(
   return { ok: true, medication: rowToMedication(row) };
 }
 
-export type DeleteMedicationResult =
-  | { ok: true }
-  | { ok: false; status: 400 | 404; error: string };
+export type DeleteMedicationResult = { ok: true } | { ok: false; status: 400 | 404; error: string };
 
 export function deleteMedication(
   db: DatabaseInstance,

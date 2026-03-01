@@ -21,10 +21,7 @@ function getToken(app: Express, email: string, password: string): Promise<string
     );
 }
 
-async function createMedication(
-  app: Express,
-  token: string
-): Promise<{ id: number }> {
+async function createMedication(app: Express, token: string): Promise<{ id: number }> {
   const res = await request(app)
     .post('/medications')
     .set('Authorization', `Bearer ${token}`)
