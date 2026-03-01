@@ -496,5 +496,44 @@ describe('Medications API', () => {
         .set('Authorization', `Bearer ${tokenB}`)
         .expect(404);
     });
+
+    it('deletes associated consumption records when medication is deleted', async () => {
+      const token = await getToken(app, 'cascade@example.com', 'password123');
+
+      // Create a medication
+      const createRes = await request(app)
+        .post('/medications')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'To Cascade Delete',
+          dose: '10mg',
+          start_date: '2025-01-01',
+          times: ['08:00'],
+          day_interval: 1,
+        })
+        .expect(201);
+      const medId = createRes.body.id as number;
+
+      // Log a consumption
+      await request(app)
+        .post(`/medications/${medId}/consumptions`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ date: '2025-01-01', time: '08:00' })
+        .expect(201);
+
+      // Verify consumption exists before deletion
+      const beforeCount = (db!.prepare('SELECT COUNT(*) as count FROM medication_consumptions WHERE medication_id = ?').get(medId) as { count: number }).count;
+      assert.strictEqual(beforeCount, 1, 'consumption should exist before delete');
+
+      // Delete the medication
+      await request(app)
+        .delete(`/medications/${medId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(204);
+
+      // Consumption row must be gone
+      const afterCount = (db!.prepare('SELECT COUNT(*) as count FROM medication_consumptions WHERE medication_id = ?').get(medId) as { count: number }).count;
+      assert.strictEqual(afterCount, 0, 'consumption should be deleted with its medication');
+    });
   });
 });
