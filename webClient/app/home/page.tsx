@@ -22,7 +22,6 @@ const emptyForm = {
   name: '',
   dose: '',
   start_date: '',
-  daily_frequency: '1',
   day_interval: '1',
 };
 
@@ -34,6 +33,7 @@ export default function HomePage() {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [medicationsError, setMedicationsError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [times, setTimes] = useState<string[]>(['08:00']);
   const [addLoading, setAddLoading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [loggingConsumptionForId, setLoggingConsumptionForId] = useState<number | null>(null);
@@ -88,18 +88,16 @@ export default function HomePage() {
     e.preventDefault();
     const token = getToken();
     if (!token) return;
-    const daily_frequency = parseInt(form.daily_frequency, 10);
     const day_interval = parseInt(form.day_interval, 10);
     if (
       !form.name.trim() ||
       !form.dose.trim() ||
       !form.start_date.trim() ||
-      Number.isNaN(daily_frequency) ||
-      daily_frequency < 1 ||
+      times.length === 0 ||
       Number.isNaN(day_interval) ||
       day_interval < 1
     ) {
-      toast.error('Fill all fields; frequency and interval must be positive numbers.');
+      toast.error('Fill all fields; at least one time and a positive interval are required.');
       return;
     }
     setAddLoading(true);
@@ -108,10 +106,11 @@ export default function HomePage() {
         name: form.name.trim(),
         dose: form.dose.trim(),
         start_date: form.start_date.trim(),
-        daily_frequency,
+        times,
         day_interval,
       });
       setForm(emptyForm);
+      setTimes(['08:00']);
       await fetchMedications();
       toast.success('Medication added.');
     } catch (err) {
@@ -276,7 +275,7 @@ export default function HomePage() {
                   <th style={thTdStyles}>Name</th>
                   <th style={thTdStyles}>Dose</th>
                   <th style={thTdStyles}>Start date</th>
-                  <th style={thTdStyles}>Freq</th>
+                  <th style={thTdStyles}>Times</th>
                   <th style={thTdStyles}>Interval</th>
                   <th style={thTdStyles}>Actions</th>
                 </tr>
@@ -295,7 +294,7 @@ export default function HomePage() {
                       <td style={thTdStyles}>{med.name}</td>
                       <td style={thTdStyles}>{med.dose}</td>
                       <td style={thTdStyles}>{med.start_date}</td>
-                      <td style={thTdStyles}>{med.daily_frequency}/day</td>
+                      <td style={thTdStyles}>{med.times.join(', ')}</td>
                       <td style={thTdStyles}>every {med.day_interval} day(s)</td>
                       <td style={thTdStyles}>
                         <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -425,17 +424,36 @@ export default function HomePage() {
                 style={{ display: 'block', marginTop: 4, width: '100%', padding: 8 }}
               />
             </label>
-            <label>
-              Daily frequency (times per day)
-              <input
-                type="number"
-                min={1}
-                value={form.daily_frequency}
-                onChange={(e) => setForm((f) => ({ ...f, daily_frequency: e.target.value }))}
-                required
-                style={{ display: 'block', marginTop: 4, width: '100%', padding: 8 }}
-              />
-            </label>
+            <div>
+              <span style={{ display: 'block', marginBottom: 4 }}>Times (HH:MM)</span>
+              {times.map((t, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+                  <input
+                    type="time"
+                    value={t}
+                    onChange={(e) => setTimes((prev) => prev.map((v, idx) => idx === i ? e.target.value : v))}
+                    required
+                    style={{ padding: 8, flex: 1 }}
+                  />
+                  {times.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setTimes((prev) => prev.filter((_, idx) => idx !== i))}
+                      style={{ color: '#c00' }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setTimes((prev) => [...prev, '08:00'])}
+                style={{ marginTop: 2 }}
+              >
+                + Add time
+              </button>
+            </div>
             <label>
               Day interval (every N days)
               <input
@@ -508,7 +526,7 @@ export default function HomePage() {
                           <ul style={{ margin: 0, paddingLeft: 18 }}>
                             {day.expected.map((e, i) => (
                               <li key={i}>
-                                {e.medication_name} (dose {e.dose_index})
+                                {e.medication_name} @ {e.time}
                               </li>
                             ))}
                           </ul>

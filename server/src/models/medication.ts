@@ -8,7 +8,7 @@ export interface Medication {
   name: string;
   dose: string;
   start_date: string;
-  daily_frequency: number;
+  times: string[];
   day_interval: number;
   created_at: string;
 }
@@ -20,7 +20,7 @@ export interface MedicationRow {
   name: string;
   dose: string;
   start_date: string;
-  daily_frequency: number;
+  times: string;
   day_interval: number;
   created_at: string;
 }
@@ -30,6 +30,6 @@ export interface MedicationInput {
   name: string;
   dose: string;
   start_date: string;
-  daily_frequency: number;
+  times: string[];
   day_interval: number;
 }

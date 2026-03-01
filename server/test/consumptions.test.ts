@@ -32,7 +32,7 @@ async function createMedication(
       name: 'Test Med',
       dose: '10mg',
       start_date: '2025-01-01',
-      daily_frequency: 1,
+      times: ['08:00'],
       day_interval: 1,
     })
     .expect(201);
