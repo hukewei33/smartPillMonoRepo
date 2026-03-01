@@ -25,7 +25,7 @@ router.post('/', (req: Request, res: Response) => {
     name: string;
     dose: string;
     start_date: string;
-    daily_frequency: number;
+    times: string[];
     day_interval: number;
   };
   const result = medicationsService.createMedication(db, userId, input);
@@ -74,7 +74,7 @@ router.put('/:id', (req: Request, res: Response) => {
     name: string;
     dose: string;
     start_date: string;
-    daily_frequency: number;
+    times: string[];
     day_interval: number;
   };
   const result = medicationsService.updateMedication(db, userId, id, input);

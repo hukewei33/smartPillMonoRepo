@@ -38,15 +38,11 @@ function expectedForMedicationOnDate(
   date: string
 ): ExpectedConsumption[] {
   if (!isDoseDay(med, date)) return [];
-  const result: ExpectedConsumption[] = [];
-  for (let i = 1; i <= med.daily_frequency; i++) {
-    result.push({
-      medication_id: med.id,
-      medication_name: med.name,
-      dose_index: i,
-    });
-  }
-  return result;
+  return med.times.map((time) => ({
+    medication_id: med.id,
+    medication_name: med.name,
+    time,
+  }));
 }
 
 /** Format date as YYYY-MM-DD. */

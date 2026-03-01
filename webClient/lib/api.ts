@@ -14,7 +14,7 @@ export type Medication = {
   name: string;
   dose: string;
   start_date: string;
-  daily_frequency: number;
+  times: string[];
   day_interval: number;
   created_at: string;
 };
@@ -81,7 +81,7 @@ export async function listMedications(token: string): Promise<MedicationsListRes
 
 export async function createMedication(
   token: string,
-  body: { name: string; dose: string; start_date: string; daily_frequency: number; day_interval: number }
+  body: { name: string; dose: string; start_date: string; times: string[]; day_interval: number }
 ): Promise<Medication> {
   const res = await fetch(`${getBaseUrl()}/medications`, {
     method: 'POST',
@@ -105,7 +105,7 @@ export async function getMedication(token: string, id: number): Promise<Medicati
 export async function updateMedication(
   token: string,
   id: number,
-  body: { name: string; dose: string; start_date: string; daily_frequency: number; day_interval: number }
+  body: { name: string; dose: string; start_date: string; times: string[]; day_interval: number }
 ): Promise<Medication> {
   const res = await fetch(`${getBaseUrl()}/medications/${id}`, {
     method: 'PUT',
@@ -145,7 +145,7 @@ export async function createMedicationConsumption(
 export type ExpectedConsumption = {
   medication_id: number;
   medication_name: string;
-  dose_index: number;
+  time: string;
 };
 
 export type ActualConsumptionReport = {

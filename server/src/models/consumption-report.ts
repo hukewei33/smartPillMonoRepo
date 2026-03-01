@@ -6,7 +6,7 @@
 export interface ExpectedConsumption {
   medication_id: number;
   medication_name: string;
-  dose_index: number;
+  time: string;
 }
 
 /** One actual logged consumption. */

@@ -51,7 +51,7 @@ describe('Medications API', () => {
           name: 'Aspirin',
           dose: '100mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(401);
@@ -68,7 +68,7 @@ describe('Medications API', () => {
           name: 'Aspirin',
           dose: '100mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(401);
@@ -80,7 +80,7 @@ describe('Medications API', () => {
   });
 
   describe('user scoping', () => {
-    it('user A cannot see, update or delete user B’s medication', async () => {
+    it('user A cannot see, update or delete user B\u2019s medication', async () => {
       const tokenA = await getToken(app, 'alice@example.com', 'password123');
       const tokenB = await getToken(app, 'bob@example.com', 'password123');
 
@@ -91,7 +91,7 @@ describe('Medications API', () => {
           name: 'Alice Med',
           dose: '10mg',
           start_date: '2025-01-01',
-          daily_frequency: 2,
+          times: ['08:00', '20:00'],
           day_interval: 1,
         })
         .expect(201);
@@ -116,7 +116,7 @@ describe('Medications API', () => {
           name: 'Hacked',
           dose: '999mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(404);
@@ -154,7 +154,7 @@ describe('Medications API', () => {
           name: 'Vitamin D',
           dose: '2000 IU',
           start_date: '2025-02-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(201);
@@ -166,7 +166,7 @@ describe('Medications API', () => {
       assert.strictEqual(res.body.medications[0].name, 'Vitamin D');
       assert.strictEqual(res.body.medications[0].dose, '2000 IU');
       assert.strictEqual(res.body.medications[0].start_date, '2025-02-01');
-      assert.strictEqual(res.body.medications[0].daily_frequency, 1);
+      assert.deepStrictEqual(res.body.medications[0].times, ['08:00']);
       assert.strictEqual(res.body.medications[0].day_interval, 1);
       assert.ok(res.body.medications[0].id);
       assert.ok(res.body.medications[0].created_at);
@@ -183,7 +183,7 @@ describe('Medications API', () => {
           name: 'Ibuprofen',
           dose: '400mg',
           start_date: '2025-01-15',
-          daily_frequency: 3,
+          times: ['08:00', '12:00', '18:00'],
           day_interval: 2,
         })
         .expect(201);
@@ -191,7 +191,7 @@ describe('Medications API', () => {
       assert.strictEqual(res.body.name, 'Ibuprofen');
       assert.strictEqual(res.body.dose, '400mg');
       assert.strictEqual(res.body.start_date, '2025-01-15');
-      assert.strictEqual(res.body.daily_frequency, 3);
+      assert.deepStrictEqual(res.body.times, ['08:00', '12:00', '18:00']);
       assert.strictEqual(res.body.day_interval, 2);
       assert.ok(res.body.created_at);
     });
@@ -204,26 +204,67 @@ describe('Medications API', () => {
         .send({
           dose: '10mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(400);
       assert.ok(res.body.error);
     });
 
-    it('returns 400 for invalid daily_frequency', async () => {
-      const token = await getToken(app, 'bad2@example.com', 'password123');
-      await request(app)
-        .post('/medications')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          name: 'Med',
-          dose: '10mg',
-          start_date: '2025-01-01',
-          daily_frequency: 0,
-          day_interval: 1,
-        })
-        .expect(400);
+    describe('times validation', () => {
+      it('returns 400 when times is missing', async () => {
+        const token = await getToken(app, 'tv1@example.com', 'password123');
+        await request(app)
+          .post('/medications')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', day_interval: 1 })
+          .expect(400);
+      });
+
+      it('returns 400 when times is an empty array', async () => {
+        const token = await getToken(app, 'tv2@example.com', 'password123');
+        await request(app)
+          .post('/medications')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: [], day_interval: 1 })
+          .expect(400);
+      });
+
+      it('returns 400 when times is not an array', async () => {
+        const token = await getToken(app, 'tv3@example.com', 'password123');
+        await request(app)
+          .post('/medications')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: 3, day_interval: 1 })
+          .expect(400);
+      });
+
+      it('returns 400 when a time entry is not in HH:MM format', async () => {
+        const token = await getToken(app, 'tv4@example.com', 'password123');
+        await request(app)
+          .post('/medications')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['8:00'], day_interval: 1 })
+          .expect(400);
+      });
+
+      it('returns 400 when hour is out of range', async () => {
+        const token = await getToken(app, 'tv5@example.com', 'password123');
+        await request(app)
+          .post('/medications')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['25:00'], day_interval: 1 })
+          .expect(400);
+      });
+
+      it('returns 400 when minute is out of range', async () => {
+        const token = await getToken(app, 'tv6@example.com', 'password123');
+        await request(app)
+          .post('/medications')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name: 'Med', dose: '10mg', start_date: '2025-01-01', times: ['08:60'], day_interval: 1 })
+          .expect(400);
+      });
     });
 
     it('returns 400 for invalid start_date', async () => {
@@ -235,7 +276,7 @@ describe('Medications API', () => {
           name: 'Med',
           dose: '10mg',
           start_date: 'not-a-date',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(400);
@@ -253,7 +294,7 @@ describe('Medications API', () => {
           name: 'Get Med',
           dose: '5mg',
           start_date: '2025-01-01',
-          daily_frequency: 2,
+          times: ['08:00', '20:00'],
           day_interval: 1,
         })
         .expect(201);
@@ -293,7 +334,7 @@ describe('Medications API', () => {
           name: 'Original',
           dose: '10mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(201);
@@ -305,7 +346,7 @@ describe('Medications API', () => {
           name: 'Updated',
           dose: '20mg',
           start_date: '2025-02-01',
-          daily_frequency: 2,
+          times: ['08:00', '20:00'],
           day_interval: 2,
         })
         .expect(200);
@@ -313,7 +354,7 @@ describe('Medications API', () => {
       assert.strictEqual(res.body.name, 'Updated');
       assert.strictEqual(res.body.dose, '20mg');
       assert.strictEqual(res.body.start_date, '2025-02-01');
-      assert.strictEqual(res.body.daily_frequency, 2);
+      assert.deepStrictEqual(res.body.times, ['08:00', '20:00']);
       assert.strictEqual(res.body.day_interval, 2);
     });
 
@@ -327,7 +368,7 @@ describe('Medications API', () => {
           name: 'A Med',
           dose: '10mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(201);
@@ -338,7 +379,7 @@ describe('Medications API', () => {
           name: 'Hacked',
           dose: '10mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(404);
@@ -355,7 +396,7 @@ describe('Medications API', () => {
           name: 'To Delete',
           dose: '10mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(201);
@@ -381,7 +422,7 @@ describe('Medications API', () => {
           name: 'A Med',
           dose: '10mg',
           start_date: '2025-01-01',
-          daily_frequency: 1,
+          times: ['08:00'],
           day_interval: 1,
         })
         .expect(201);

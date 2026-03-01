@@ -24,8 +24,8 @@ function getToken(app: Express, email: string, password: string): Promise<string
 async function createMedication(
   app: Express,
   token: string,
-  overrides: Partial<{ name: string; start_date: string; daily_frequency: number; day_interval: number }> = {}
-): Promise<{ id: number; name: string; start_date: string; daily_frequency: number; day_interval: number }> {
+  overrides: Partial<{ name: string; start_date: string; times: string[]; day_interval: number }> = {}
+): Promise<{ id: number; name: string; start_date: string; times: string[]; day_interval: number }> {
   const res = await request(app)
     .post('/medications')
     .set('Authorization', `Bearer ${token}`)
@@ -33,7 +33,7 @@ async function createMedication(
       name: overrides.name ?? 'Test Med',
       dose: '10mg',
       start_date: overrides.start_date ?? '2025-01-01',
-      daily_frequency: overrides.daily_frequency ?? 1,
+      times: overrides.times ?? ['08:00'],
       day_interval: overrides.day_interval ?? 1,
     })
     .expect(201);
@@ -41,7 +41,7 @@ async function createMedication(
     id: res.body.id,
     name: res.body.name,
     start_date: res.body.start_date,
-    daily_frequency: res.body.daily_frequency,
+    times: res.body.times,
     day_interval: res.body.day_interval,
   };
 }
@@ -120,12 +120,12 @@ describe('GET /consumption-report', () => {
   });
 
   describe('expected consumption (date math)', () => {
-    it('includes expected slots based on start_date, day_interval and daily_frequency', async () => {
+    it('includes expected slots based on start_date, day_interval and times', async () => {
       const token = await getToken(app, 'user@example.com', 'password123');
       await createMedication(app, token, {
         name: 'Daily Twice',
         start_date: '2025-02-15',
-        daily_frequency: 2,
+        times: ['08:00', '20:00'],
         day_interval: 1,
       });
       const res = await request(app)
@@ -136,8 +136,8 @@ describe('GET /consumption-report', () => {
       assert.strictEqual(firstDay.date, '2025-02-15');
       assert.strictEqual(firstDay.expected.length, 2);
       assert.strictEqual(firstDay.expected[0].medication_name, 'Daily Twice');
-      assert.strictEqual(firstDay.expected[0].dose_index, 1);
-      assert.strictEqual(firstDay.expected[1].dose_index, 2);
+      assert.strictEqual(firstDay.expected[0].time, '08:00');
+      assert.strictEqual(firstDay.expected[1].time, '20:00');
     });
 
     it('omits expected on non-dose days when day_interval is 2', async () => {
@@ -145,7 +145,7 @@ describe('GET /consumption-report', () => {
       await createMedication(app, token, {
         name: 'Every Other',
         start_date: '2025-02-15',
-        daily_frequency: 1,
+        times: ['08:00'],
         day_interval: 2,
       });
       const res = await request(app)
@@ -161,6 +161,24 @@ describe('GET /consumption-report', () => {
       assert.strictEqual(day1.expected.length, 0);
       assert.strictEqual(day2.date, '2025-02-17');
       assert.strictEqual(day2.expected.length, 1);
+    });
+
+    it('generates one expected slot per time entry on a dose day', async () => {
+      const token = await getToken(app, 'user@example.com', 'password123');
+      await createMedication(app, token, {
+        name: 'Three Times',
+        start_date: '2025-01-01',
+        times: ['07:00', '13:00', '21:00'],
+        day_interval: 1,
+      });
+      const res = await request(app)
+        .get('/consumption-report?start_date=2025-01-01')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      assert.strictEqual(res.body[0].expected.length, 3);
+      assert.strictEqual(res.body[0].expected[0].time, '07:00');
+      assert.strictEqual(res.body[0].expected[1].time, '13:00');
+      assert.strictEqual(res.body[0].expected[2].time, '21:00');
     });
   });
 

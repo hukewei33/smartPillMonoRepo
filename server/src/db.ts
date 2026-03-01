@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS medications (
   name TEXT NOT NULL,
   dose TEXT NOT NULL,
   start_date TEXT NOT NULL,
-  daily_frequency INTEGER NOT NULL,
+  times TEXT NOT NULL,
   day_interval INTEGER NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users (id)

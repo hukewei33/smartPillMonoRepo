@@ -7,7 +7,7 @@ function rowToMedication(row: MedicationRow): Medication {
     name: row.name,
     dose: row.dose,
     start_date: row.start_date,
-    daily_frequency: row.daily_frequency,
+    times: JSON.parse(row.times) as string[],
     day_interval: row.day_interval,
     created_at: row.created_at,
   };
@@ -19,8 +19,14 @@ export function validateMedicationInput(body: unknown): string | null {
   if (typeof b.name !== 'string' || !b.name.trim()) return 'Name is required';
   if (typeof b.dose !== 'string' || !b.dose.trim()) return 'Dose is required';
   if (typeof b.start_date !== 'string' || !b.start_date.trim()) return 'Start date is required';
-  if (typeof b.daily_frequency !== 'number' || b.daily_frequency < 1 || !Number.isInteger(b.daily_frequency)) {
-    return 'Daily frequency must be a positive integer';
+  if (!Array.isArray(b.times) || b.times.length === 0)
+    return 'Times must be a non-empty array of HH:MM strings';
+  for (const t of b.times) {
+    if (typeof t !== 'string' || !/^\d{2}:\d{2}$/.test(t))
+      return 'Each time must be in HH:MM format';
+    const [hh, mm] = t.split(':').map(Number);
+    if (hh < 0 || hh > 23 || mm < 0 || mm > 59)
+      return 'Each time must have hours 0-23 and minutes 0-59';
   }
   if (typeof b.day_interval !== 'number' || b.day_interval < 1 || !Number.isInteger(b.day_interval)) {
     return 'Day interval must be a positive integer';
@@ -33,7 +39,7 @@ export function validateMedicationInput(body: unknown): string | null {
 export function listMedications(db: DatabaseInstance, userId: number): Medication[] {
   const rows = db
     .prepare(
-      'SELECT id, user_id, name, dose, start_date, daily_frequency, day_interval, created_at FROM medications WHERE user_id = ? ORDER BY created_at DESC'
+      'SELECT id, user_id, name, dose, start_date, times, day_interval, created_at FROM medications WHERE user_id = ? ORDER BY created_at DESC'
     )
     .all(userId) as MedicationRow[];
   return rows.map(rowToMedication);
@@ -50,7 +56,7 @@ export function createMedication(
 ): CreateMedicationResult {
   const result = db
     .prepare(
-      `INSERT INTO medications (user_id, name, dose, start_date, daily_frequency, day_interval)
+      `INSERT INTO medications (user_id, name, dose, start_date, times, day_interval)
        VALUES (?, ?, ?, ?, ?, ?)`
     )
     .run(
@@ -58,12 +64,12 @@ export function createMedication(
       input.name.trim(),
       input.dose.trim(),
       input.start_date.trim(),
-      input.daily_frequency,
+      JSON.stringify(input.times),
       input.day_interval
     );
   const row = db
     .prepare(
-      'SELECT id, user_id, name, dose, start_date, daily_frequency, day_interval, created_at FROM medications WHERE id = ?'
+      'SELECT id, user_id, name, dose, start_date, times, day_interval, created_at FROM medications WHERE id = ?'
     )
     .get(result.lastInsertRowid) as MedicationRow;
   return { ok: true, medication: rowToMedication(row) };
@@ -83,7 +89,7 @@ export function getMedication(
   }
   const row = db
     .prepare(
-      'SELECT id, user_id, name, dose, start_date, daily_frequency, day_interval, created_at FROM medications WHERE id = ? AND user_id = ?'
+      'SELECT id, user_id, name, dose, start_date, times, day_interval, created_at FROM medications WHERE id = ? AND user_id = ?'
     )
     .get(id, userId) as MedicationRow | undefined;
   if (!row) {
@@ -110,20 +116,20 @@ export function updateMedication(
     return { ok: false, status: 404, error: 'Medication not found' };
   }
   db.prepare(
-    `UPDATE medications SET name = ?, dose = ?, start_date = ?, daily_frequency = ?, day_interval = ?
+    `UPDATE medications SET name = ?, dose = ?, start_date = ?, times = ?, day_interval = ?
      WHERE id = ? AND user_id = ?`
   ).run(
     input.name.trim(),
     input.dose.trim(),
     input.start_date.trim(),
-    input.daily_frequency,
+    JSON.stringify(input.times),
     input.day_interval,
     id,
     userId
   );
   const row = db
     .prepare(
-      'SELECT id, user_id, name, dose, start_date, daily_frequency, day_interval, created_at FROM medications WHERE id = ?'
+      'SELECT id, user_id, name, dose, start_date, times, day_interval, created_at FROM medications WHERE id = ?'
     )
     .get(id) as MedicationRow;
   return { ok: true, medication: rowToMedication(row) };
