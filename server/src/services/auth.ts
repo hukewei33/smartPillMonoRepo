@@ -1,8 +1,8 @@
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../config';
 import type { DatabaseInstance } from '../db';
 import type { LoginInput, RegisterInput, User, UserRow } from '../models/user';
-import { getJwtSecret } from '../config';
 
 const MIN_PASSWORD_LENGTH = 8;
 

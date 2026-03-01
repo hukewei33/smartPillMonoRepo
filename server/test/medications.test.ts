@@ -1,9 +1,9 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import request from 'supertest';
-import { createTestApp } from './helpers';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { Express } from 'express';
+import request from 'supertest';
 import type { DatabaseInstance } from '../src/db';
+import { createTestApp } from './helpers';
 
 const TEST_SECRET = 'test-secret';
 

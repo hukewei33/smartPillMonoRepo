@@ -1,10 +1,10 @@
 import type { DatabaseInstance } from '../db';
-import type { Medication } from '../models/medication';
 import type {
   ActualConsumption,
   DayResult,
   ExpectedConsumption,
 } from '../models/consumption-report';
+import type { Medication } from '../models/medication';
 import { listMedications } from './medications';
 
 const REPORT_DAYS = 7;

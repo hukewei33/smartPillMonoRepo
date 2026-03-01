@@ -1,6 +1,6 @@
-import { openDatabase, type DatabaseInstance } from '../src/db';
-import { createApp } from '../src/app';
 import type { Express } from 'express';
+import { createApp } from '../src/app';
+import { type DatabaseInstance, openDatabase } from '../src/db';
 
 /**
  * Creates a fresh Express app instance with its own in-memory DB.

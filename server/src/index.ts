@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { createApp } from './app';
-import { openDatabase, getDbPath, type DatabaseInstance } from './db';
+import { type DatabaseInstance, getDbPath, openDatabase } from './db';
 
 const PORT = Number(process.env.PORT) || 3000;
 
